@@ -35,11 +35,21 @@ class GISDAL(IGISDAL):
             raise ValueError("Specified driver is not compiled into GDAL")
         if mode != GISDAL.READONLY and mode != GISDAL.READWRITE:
             raise ValueError("Mode must be 0 or 1")
-        self.ds: ogr.DataSource = self.driver.Open(self.gdb_path, mode)
+        self.mode = mode
+        if self.mode == GISDAL.READWRITE:
+            if self.driver == GISDAL.FILEGDB:
+                self.dialect = "FILEGDB"
+            else: 
+                self.dialect = "SQLITE"
+        else:
+            self.dialect = "OGR"
+        self.ds: ogr.DataSource = self.driver.Open(self.gdb_path, self.mode)
 
-    def _execute_query(self, query_str, result_func):
-        layer = self.ds.ExecuteSQL(query_str)
-        result_func(layer)
+    def _execute_query(self, query_str, result_func = None):
+        
+        layer = self.ds.ExecuteSQL(query_str, dialect=self.dialect)
+        if result_func is not None:
+            result_func(layer)
         self.ds.ReleaseResultSet(layer)
 
 
