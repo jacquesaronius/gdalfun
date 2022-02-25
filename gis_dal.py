@@ -1,6 +1,7 @@
 from osgeo import ogr
 from abc import ABCMeta, abstractmethod
 from typing import List
+import re
 
 class IGISDAL:
 
@@ -38,7 +39,7 @@ class GISDAL(IGISDAL):
         self.mode = mode
         if self.mode == GISDAL.READWRITE:
             if self.driver == GISDAL.FILEGDB:
-                self.dialect = "FILEGDB"
+                self.dialect = "FileGDB"
             else: 
                 self.dialect = "SQLITE"
         else:
@@ -46,8 +47,14 @@ class GISDAL(IGISDAL):
         self.ds: ogr.DataSource = self.driver.Open(self.gdb_path, self.mode)
 
     def _execute_query(self, query_str, result_func = None):
-        
-        layer = self.ds.ExecuteSQL(query_str, dialect=self.dialect)
+        dialect: str
+        p = re.compile(r"^SELECT")
+        m = p.match(query_str)
+        if m is not None:
+            dialect = "OGR"
+        else:
+            dialect = self.dialect
+        layer = self.ds.ExecuteSQL(query_str, dialect=dialect)
         if result_func is not None:
             result_func(layer)
         self.ds.ReleaseResultSet(layer)
