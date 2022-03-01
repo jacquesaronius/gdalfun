@@ -2,6 +2,7 @@ from osgeo import ogr
 from abc import ABCMeta, abstractmethod
 from typing import List
 import re
+from multipledispatch import dispatch
 
 class IGISDAL:
 
@@ -18,6 +19,15 @@ class IGISDAL:
     @abstractmethod
     def execute_query_as_dictionary(self, query_str: str) -> List[dict]:
         raise NotImplementedError
+
+    @dispatch(str)
+    def execute_update_query(self, query_str: str) -> None:
+        raise NotImplementedError
+    
+    @dispatch(str, str, str, str)
+    def execute_update_query(self, table: str, field_name: str, where_clause: str, value: str):
+        raise NotImplementedError
+    
     
 class GISDAL(IGISDAL):
 
@@ -119,5 +129,15 @@ class GISDAL(IGISDAL):
             else:
                 sentinel = False
         return results
+    
+    @dispatch(str)
+    def execute_update_query(self, query_str: str) -> None:
+        self._execute_query(query_str)
+    
+    @dispatch(str, str, str, str)
+    def execute_update_query(self, table: str, field_name: str, where_clause: str, value: str):
+        query: str = f"UPDATE {table} SET {field_name} = {value} WHERE {where_clause}"
+        self.execute_update_query(query)
+    
 
 

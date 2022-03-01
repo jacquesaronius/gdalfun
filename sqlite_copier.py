@@ -1,17 +1,17 @@
 
 import shutil
 from uuid import uuid1
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractclassmethod
 
 class DBCopier:
     
     __metaclass__: ABCMeta
     
-    @abstractmethod
+    @abstractclassmethod
     def copy(source):
         raise NotImplementedError
 
-class SQLiteCopier:
+class SQLiteCopier(DBCopier):
 
     def copy(source: str) -> str:
         dst = f"/tmp/{uuid1()}.db"
